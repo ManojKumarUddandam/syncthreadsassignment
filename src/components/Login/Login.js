@@ -10,7 +10,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('https://your-backend.onrender.com/api/login', { username, password });
+      const response = await axios.post('https://syncthreadsassignment-1.onrender.com/api/login', { username, password });
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
     } catch (error) {

@@ -7,11 +7,18 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
-app.use(bodyParser.json());
-
 const SECRET_KEY = 'your_secret_key';
 const users = []; // Store users in memory (replace with a database in production)
+
+// CORS configuration to allow requests from the frontend URL
+const corsOptions = {
+  origin: 'http://localhost:3000', // Allow requests from your frontend
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+};
+
+app.use(cors(corsOptions)); // Apply CORS middleware with the options
+app.use(bodyParser.json());
 
 // Signup API
 app.post('/api/signup', async (req, res) => {

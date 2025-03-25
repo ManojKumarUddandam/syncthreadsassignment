@@ -10,7 +10,7 @@ const Signup = () => {
 
   const handleSignup = async () => {
     try {
-      const response = await axios.post('https://your-backend.onrender.com/api/signup', { username, password });
+      const response = await axios.post('https://syncthreadsassignment-1.onrender.com/api/signup', { username, password });
       alert(response.data.message);
       navigate('/login');
     } catch (error) {
