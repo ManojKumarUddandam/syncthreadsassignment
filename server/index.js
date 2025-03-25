@@ -7,7 +7,11 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://mapintegrationmanoj.netlify.app', // Allow only your frontend domain
+  methods: 'GET,POST,PUT,DELETE',
+  credentials: true // Allow cookies and authorization headers
+}));
 app.use(bodyParser.json());
 
 const SECRET_KEY = 'your_secret_key';
