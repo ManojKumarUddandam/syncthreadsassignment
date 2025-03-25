@@ -3,76 +3,67 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000; // Use environment variable for port
+const PORT = process.env.PORT || 5000;
 
-// ✅ Enhanced CORS Configuration
-const allowedOrigins = [
-  'https://mapintegrationmanoj.netlify.app',
-  'http://localhost:3000' // For local development
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+// CORS Configuration
+app.use(cors({
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204
-};
+}));
 
-// Apply CORS middleware
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle all OPTIONS requests
+app.options('*', cors());
 
-// Body parser middleware
+// Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ✅ Enhanced Debugging Middleware
+// Add headers to all responses
 app.use((req, res, next) => {
-  console.log(`📥 ${new Date().toISOString()} - ${req.method} ${req.path}`);
-  console.log('🔍 Headers:', req.headers);
-  console.log('📦 Body:', req.body);
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key_should_be_long_and_complex';
-const users = []; // In-memory storage (replace with database in production)
+// Debug Middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body);
+  next();
+});
 
-// ✅ Improved Error Handling Middleware
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
+const users = [];
+
+// Error Handler
 app.use((err, req, res, next) => {
-  console.error('🔥 Error:', err.stack);
+  console.error('Error:', err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// ✅ Enhanced Signup API
+// Signup API
 app.post('/api/signup', async (req, res, next) => {
   try {
     const { username, password } = req.body;
     
-    // Input validation
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
-    // Check if user exists
     const userExists = users.some(u => u.username === username);
     if (userExists) {
       return res.status(409).json({ message: 'User already exists' });
     }
 
-    // Hash Password
     const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Save User
     const newUser = { 
       id: users.length + 1, 
       username, 
@@ -81,7 +72,6 @@ app.post('/api/signup', async (req, res, next) => {
     };
     users.push(newUser);
 
-    console.log(`✅ New user registered: ${username}`);
     res.status(201).json({ 
       message: 'User registered successfully',
       user: { id: newUser.id, username: newUser.username }
@@ -91,7 +81,7 @@ app.post('/api/signup', async (req, res, next) => {
   }
 });
 
-// ✅ Enhanced Login API
+// Login API
 app.post('/api/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -116,7 +106,6 @@ app.post('/api/login', async (req, res, next) => {
       { expiresIn: '1h' }
     );
 
-    console.log(`🔑 User logged in: ${username}`);
     res.json({ 
       token,
       user: { id: user.id, username: user.username }
@@ -126,7 +115,7 @@ app.post('/api/login', async (req, res, next) => {
   }
 });
 
-// ✅ Protected Routes Middleware
+// JWT Authentication Middleware
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
@@ -137,7 +126,6 @@ const authenticateJWT = (req, res, next) => {
       if (err) {
         return res.sendStatus(403);
       }
-      
       req.user = user;
       next();
     });
@@ -146,9 +134,8 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-// ✅ Protected Dashboard API
+// Protected Dashboard API
 app.get('/api/dashboard', authenticateJWT, (req, res) => {
-  console.log(`📊 Dashboard accessed by: ${req.user.username}`);
   res.json({
     cards: [
       { id: 1, title: 'Card 1', content: 'Dashboard content 1' },
@@ -161,11 +148,10 @@ app.get('/api/dashboard', authenticateJWT, (req, res) => {
   });
 });
 
-// ✅ Protected Map API
+// Protected Map API
 app.get('/api/map', authenticateJWT, (req, res) => {
-  console.log(`🗺️ Map accessed by: ${req.user.username}`);
   res.json({
-    center: [20.5937, 78.9629], // India coordinates
+    center: [20.5937, 78.9629],
     zoom: 5,
     markers: [
       { id: 1, position: [28.6139, 77.2090], title: 'Delhi' },
@@ -174,7 +160,7 @@ app.get('/api/map', authenticateJWT, (req, res) => {
   });
 });
 
-// ✅ Health Check Endpoint
+// Health Check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK',
@@ -183,8 +169,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ✅ Start Server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`Server running on port ${PORT}`);
 });
