@@ -8,19 +8,26 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// CORS Configuration
 const corsOptions = {
-  origin: 'https://mapintegrationmanoj.netlify.app',
+  origin: 'https://mapintegrationmanoj.netlify.app', // Ensure this is the correct frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  maxAge: 86400
+  credentials: true, // Allow cookies to be sent with the request
+  maxAge: 86400, // Cache preflight response for 24 hours
 };
 
+// Enable CORS for all routes with specified options
 app.use(cors(corsOptions));
 
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions)); // Allow preflight requests to all routes
+
+// Body parsing middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   console.log('Headers:', req.headers);
@@ -28,9 +35,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// JWT secret key
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 const users = [];
 
+// Global error handler
 app.use((err, req, res, next) => {
   if (err.name === 'CORSError') {
     return res.status(403).json({
@@ -42,10 +51,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// Signup Route
 app.post('/api/signup', async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    
+
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password are required' });
     }
@@ -73,10 +83,11 @@ app.post('/api/signup', async (req, res, next) => {
   }
 });
 
+// Login Route
 app.post('/api/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    
+
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password are required' });
     }
@@ -92,12 +103,12 @@ app.post('/api/login', async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username }, 
-      SECRET_KEY, 
+      { id: user.id, username: user.username },
+      SECRET_KEY,
       { expiresIn: '1h' }
     );
 
-    res.json({ 
+    res.json({
       token,
       user: { id: user.id, username: user.username }
     });
@@ -106,12 +117,13 @@ app.post('/api/login', async (req, res, next) => {
   }
 });
 
+// JWT Authentication Middleware
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  
+
   if (authHeader) {
     const token = authHeader.split(' ')[1];
-    
+
     jwt.verify(token, SECRET_KEY, (err, user) => {
       if (err) {
         return res.sendStatus(403);
@@ -124,6 +136,7 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
+// Dashboard Route (Protected)
 app.get('/api/dashboard', authenticateJWT, (req, res) => {
   res.json({
     cards: [
@@ -138,6 +151,7 @@ app.get('/api/dashboard', authenticateJWT, (req, res) => {
   });
 });
 
+// Map Route (Protected)
 app.get('/api/map', authenticateJWT, (req, res) => {
   res.json({
     center: [20.5937, 78.9629],
@@ -149,6 +163,7 @@ app.get('/api/map', authenticateJWT, (req, res) => {
   });
 });
 
+// Health Check Route
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK',
@@ -157,6 +172,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
