@@ -8,31 +8,19 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS Configuration
-app.use(cors({
-  origin: '*',
+const corsOptions = {
+  origin: 'https://mapintegrationmanoj.netlify.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+  maxAge: 86400
+};
 
-app.options('*', cors());
+app.use(cors(corsOptions));
 
-// Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Add headers to all responses
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
-
-// Debug Middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   console.log('Headers:', req.headers);
@@ -43,13 +31,17 @@ app.use((req, res, next) => {
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 const users = [];
 
-// Error Handler
 app.use((err, req, res, next) => {
+  if (err.name === 'CORSError') {
+    return res.status(403).json({
+      error: 'CORS error',
+      message: err.message
+    });
+  }
   console.error('Error:', err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Signup API
 app.post('/api/signup', async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -81,7 +73,6 @@ app.post('/api/signup', async (req, res, next) => {
   }
 });
 
-// Login API
 app.post('/api/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -115,7 +106,6 @@ app.post('/api/login', async (req, res, next) => {
   }
 });
 
-// JWT Authentication Middleware
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
@@ -134,12 +124,12 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-// Protected Dashboard API
 app.get('/api/dashboard', authenticateJWT, (req, res) => {
   res.json({
     cards: [
-      { id: 1, title: 'Card 1', content: 'Dashboard content 1' },
-      { id: 2, title: 'Card 2', content: 'Dashboard content 2' },
+      { id: 1, title: 'World Map View', path: '/map?view=world' },
+      { id: 2, title: "User's Current Location", path: '/map?view=current' },
+      { id: 3, title: 'City-wise Search', path: '/map?view=city' }
     ],
     user: {
       id: req.user.id,
@@ -148,7 +138,6 @@ app.get('/api/dashboard', authenticateJWT, (req, res) => {
   });
 });
 
-// Protected Map API
 app.get('/api/map', authenticateJWT, (req, res) => {
   res.json({
     center: [20.5937, 78.9629],
@@ -160,7 +149,6 @@ app.get('/api/map', authenticateJWT, (req, res) => {
   });
 });
 
-// Health Check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK',
