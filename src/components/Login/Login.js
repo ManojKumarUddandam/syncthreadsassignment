@@ -6,15 +6,22 @@ import './Login.css'; // Make sure to import the CSS
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
+      // Make the API call to login
       const response = await axios.post('https://syncthreadsassignment-1.onrender.com/api/login', { username, password });
+
+      // Store the JWT token in localStorage upon successful login
       localStorage.setItem('token', response.data.token);
+
+      // Redirect to the dashboard after successful login
       navigate('/dashboard');
     } catch (error) {
-      alert('Invalid credentials');
+      // Display specific error message if login fails
+      setError(error.response?.data?.message || 'Invalid credentials');
     }
   };
 
@@ -35,6 +42,9 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
         <button onClick={handleLogin}>Login</button>
+        
+        {error && <div className="error-message">{error}</div>}
+        
         <p>
           Don't have an account? <button onClick={() => navigate('/signup')}>Signup</button>
         </p>

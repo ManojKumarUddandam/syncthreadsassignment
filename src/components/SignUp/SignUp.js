@@ -6,15 +6,27 @@ import './SignUp.css'; // Ensure the path is correct
 const Signup = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSignup = async () => {
+    // Basic form validation
+    if (!username || !password) {
+      setError('Both username and password are required');
+      return;
+    }
+
     try {
+      setLoading(true); // Show loading state
+      setError(''); // Clear any previous errors
       const response = await axios.post('https://syncthreadsassignment-1.onrender.com/api/signup', { username, password });
-      alert(response.data.message);
+      alert(response.data.message); // Assuming the response contains a message
       navigate('/login');
     } catch (error) {
-      alert(error.response?.data?.message || 'Signup failed');
+      setError(error.response?.data?.message || 'Signup failed');
+    } finally {
+      setLoading(false); // Hide loading state after request completes
     }
   };
 
@@ -34,7 +46,12 @@ const Signup = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button onClick={handleSignup}>Signup</button>
+        <button onClick={handleSignup} disabled={loading}>
+          {loading ? 'Signing up...' : 'Signup'}
+        </button>
+        
+        {error && <div className="error-message">{error}</div>}
+        
         <p>
           Already have an account? <button onClick={() => navigate('/login')}>Login</button>
         </p>

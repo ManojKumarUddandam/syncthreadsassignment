@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -17,7 +16,8 @@ const corsOptions = {
 // Use CORS middleware with the above options
 app.use(cors(corsOptions));
 
-app.use(bodyParser.json());
+// Use express built-in JSON parser
+app.use(express.json());
 
 const SECRET_KEY = 'your_secret_key';
 const users = []; // Store users in memory (replace with a database in production)
@@ -25,6 +25,10 @@ const users = []; // Store users in memory (replace with a database in productio
 // Signup API
 app.post('/api/signup', async (req, res) => {
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
 
   // Check if the user already exists
   const userExists = users.find(u => u.username === username);
