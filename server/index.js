@@ -7,18 +7,20 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 5000;
 
-const SECRET_KEY = 'your_secret_key';
-const users = []; // Store users in memory (replace with a database in production)
-
-// CORS configuration to allow requests from the frontend URL
+// CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:3000', // Allow requests from your frontend
-  methods: ['GET', 'POST'],
+  origin: 'https://mapintegrationmanoj.netlify.app', // Allow only your frontend's URL
+  methods: ['GET', 'POST'], // Allow these HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
 };
 
-app.use(cors(corsOptions)); // Apply CORS middleware with the options
+// Use CORS middleware with the above options
+app.use(cors(corsOptions));
+
 app.use(bodyParser.json());
+
+const SECRET_KEY = 'your_secret_key';
+const users = []; // Store users in memory (replace with a database in production)
 
 // Signup API
 app.post('/api/signup', async (req, res) => {
